@@ -580,10 +580,10 @@ namespace Microsoft.AspNetCore.SignalR.Client.Tests
                 {
                     await hubConnection.StartAsync().OrTimeout();
 
-                    var firstPing = await connection.ReadSentTextMessageAsync(ignorePings: false).OrTimeout(TimeSpan.FromMilliseconds(200));
+                    var firstPing = await connection.ReadSentTextMessageAsync(ignorePings: false).OrTimeout();
                     Assert.Equal("{\"type\":6}", firstPing);
 
-                    var secondPing = await connection.ReadSentTextMessageAsync(ignorePings: false).OrTimeout(TimeSpan.FromMilliseconds(200));
+                    var secondPing = await connection.ReadSentTextMessageAsync(ignorePings: false).OrTimeout();
                     Assert.Equal("{\"type\":6}", secondPing);
                 }
                 finally
