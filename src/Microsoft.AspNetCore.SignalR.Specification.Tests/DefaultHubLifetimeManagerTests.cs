@@ -1,8 +1,8 @@
-﻿using Microsoft.Extensions.Logging;
+﻿// Copyright (c) .NET Foundation. All rights reserved.
+// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Microsoft.AspNetCore.SignalR.Specification.Tests
 {
@@ -16,8 +16,5 @@ namespace Microsoft.AspNetCore.SignalR.Specification.Tests
 
     public class MyHub : Hub
     {
-
     }
-
-
 }
