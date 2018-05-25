@@ -6,13 +6,13 @@ using Microsoft.AspNetCore.SignalR.Protocol;
 using Microsoft.AspNetCore.SignalR.Tests;
 using Xunit;
 
-namespace Microsoft.AspNetCore.SignalR.Common.Tests
+namespace Microsoft.AspNetCore.SignalR.Specification.Tests
 {
     public abstract class HubLifetimeManagerTestsBase<THub> where THub : Hub
     {
         public HubLifetimeManager<THub> Manager;
 
-        public abstract HubLifetimeManager<THub> GetNewHubLifetimeManager();
+        public abstract HubLifetimeManager<THub> CreateNewHubLifetimeManager();
 
         [Fact]
         public async Task SendAllAsyncWritesToAllConnectionsOutput()
@@ -20,7 +20,7 @@ namespace Microsoft.AspNetCore.SignalR.Common.Tests
             using (var client1 = new TestClient())
             using (var client2 = new TestClient())
             {
-                var manager = GetNewHubLifetimeManager();
+                var manager = CreateNewHubLifetimeManager();
                 var connection1 = HubConnectionContextUtils.Create(client1.Connection);
                 var connection2 = HubConnectionContextUtils.Create(client2.Connection);
 
@@ -47,7 +47,7 @@ namespace Microsoft.AspNetCore.SignalR.Common.Tests
             using (var client1 = new TestClient())
             using (var client2 = new TestClient())
             {
-                var manager = GetNewHubLifetimeManager();
+                var manager = CreateNewHubLifetimeManager();
                 var connection1 = HubConnectionContextUtils.Create(client1.Connection);
                 var connection2 = HubConnectionContextUtils.Create(client2.Connection);
 
@@ -73,7 +73,7 @@ namespace Microsoft.AspNetCore.SignalR.Common.Tests
             using (var client1 = new TestClient())
             using (var client2 = new TestClient())
             {
-                var manager = GetNewHubLifetimeManager();
+                var manager = CreateNewHubLifetimeManager();
                 var connection1 = HubConnectionContextUtils.Create(client1.Connection);
                 var connection2 = HubConnectionContextUtils.Create(client2.Connection);
 
@@ -99,7 +99,7 @@ namespace Microsoft.AspNetCore.SignalR.Common.Tests
             using (var client1 = new TestClient())
             using (var client2 = new TestClient())
             {
-                var manager = GetNewHubLifetimeManager();
+                var manager = CreateNewHubLifetimeManager();
                 var connection1 = HubConnectionContextUtils.Create(client1.Connection);
                 var connection2 = HubConnectionContextUtils.Create(client2.Connection);
 
@@ -125,7 +125,7 @@ namespace Microsoft.AspNetCore.SignalR.Common.Tests
         {
             using (var client = new TestClient())
             {
-                var manager = GetNewHubLifetimeManager();
+                var manager = CreateNewHubLifetimeManager();
                 var connection = HubConnectionContextUtils.Create(client.Connection);
 
                 await manager.OnConnectedAsync(connection).OrTimeout();

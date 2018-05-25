@@ -1,46 +1,19 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.SignalR.Internal;
 using Microsoft.AspNetCore.SignalR.Protocol;
-using Microsoft.AspNetCore.SignalR.Redis;
 using Microsoft.AspNetCore.SignalR.Tests;
-using Microsoft.Extensions.Logging.Abstractions;
-using Microsoft.Extensions.Options;
 using Moq;
-using Newtonsoft.Json.Linq;
-using Newtonsoft.Json.Serialization;
 using Xunit;
 
-namespace Microsoft.AspNetCore.SignalR.Common.Tests
+namespace Microsoft.AspNetCore.SignalR.Specification.Tests
 {
-    public class RedisCustomHubLifetimeManagerTests : HubLifetimeManagerTestsBase<MyHub>
+    public abstract class ScaleoutHubLifetimeManagerTests : HubLifetimeManagerTestsBase<MyHub>
     {
-        public override HubLifetimeManager<MyHub> GetNewHubLifetimeManager()
-        {
-            var server = new TestRedisServer();
-
-            return CreateLifetimeManager(server);
-        }
-
-        private RedisHubLifetimeManager<MyHub> CreateLifetimeManager(TestRedisServer server, MessagePackHubProtocolOptions messagePackOptions = null, JsonHubProtocolOptions jsonOptions = null)
-        {
-            var options = new RedisOptions() { ConnectionFactory = async (t) => await Task.FromResult(new TestConnectionMultiplexer(server)) };
-            messagePackOptions = messagePackOptions ?? new MessagePackHubProtocolOptions();
-            jsonOptions = jsonOptions ?? new JsonHubProtocolOptions();
-            return new RedisHubLifetimeManager<MyHub>(
-                NullLogger<RedisHubLifetimeManager<MyHub>>.Instance,
-                Options.Create(options),
-                new DefaultHubProtocolResolver(new IHubProtocol[]
-                {
-                    new JsonHubProtocol(Options.Create(jsonOptions)),
-                    new MessagePackHubProtocol(Options.Create(messagePackOptions)),
-                }, NullLogger<DefaultHubProtocolResolver>.Instance));
-        }
+        public abstract HubLifetimeManager<MyHub> CreateNewHubLifetimeManagerFromExistingServer();
 
         private async Task AssertMessageAsync(TestClient client)
         {
@@ -53,10 +26,9 @@ namespace Microsoft.AspNetCore.SignalR.Common.Tests
         [Fact]
         public async Task InvokeAllAsyncWithMultipleServersWritesToAllConnectionsOutput()
         {
-            var server = new TestRedisServer();
 
-            var manager1 = CreateLifetimeManager(server);
-            var manager2 = CreateLifetimeManager(server);
+            var manager1 = CreateNewHubLifetimeManager();
+            var manager2 = CreateNewHubLifetimeManagerFromExistingServer();
 
             using (var client1 = new TestClient())
             using (var client2 = new TestClient())
@@ -79,8 +51,8 @@ namespace Microsoft.AspNetCore.SignalR.Common.Tests
         {
             var server = new TestRedisServer();
 
-            var manager1 = CreateLifetimeManager(server);
-            var manager2 = CreateLifetimeManager(server);
+            var manager1 = CreateNewHubLifetimeManager();
+            var manager2 = CreateNewHubLifetimeManagerFromExistingServer();
 
             using (var client1 = new TestClient())
             using (var client2 = new TestClient())
@@ -106,8 +78,8 @@ namespace Microsoft.AspNetCore.SignalR.Common.Tests
         {
             var server = new TestRedisServer();
 
-            var manager1 = CreateLifetimeManager(server);
-            var manager2 = CreateLifetimeManager(server);
+            var manager1 = CreateNewHubLifetimeManager();
+            var manager2 = CreateNewHubLifetimeManagerFromExistingServer();
 
             using (var client = new TestClient())
             {
@@ -126,8 +98,8 @@ namespace Microsoft.AspNetCore.SignalR.Common.Tests
         {
             var server = new TestRedisServer();
 
-            var manager1 = CreateLifetimeManager(server);
-            var manager2 = CreateLifetimeManager(server);
+            var manager1 = CreateNewHubLifetimeManager();
+            var manager2 = CreateNewHubLifetimeManagerFromExistingServer();
 
             using (var client = new TestClient())
             {
@@ -148,7 +120,7 @@ namespace Microsoft.AspNetCore.SignalR.Common.Tests
         {
             var server = new TestRedisServer();
 
-            var manager = CreateLifetimeManager(server);
+            var manager = CreateNewHubLifetimeManager();
 
             using (var client = new TestClient())
             {
@@ -171,7 +143,7 @@ namespace Microsoft.AspNetCore.SignalR.Common.Tests
         {
             var server = new TestRedisServer();
 
-            var manager = CreateLifetimeManager(server);
+            var manager = CreateNewHubLifetimeManager();
 
             using (var client = new TestClient())
             {
@@ -188,8 +160,8 @@ namespace Microsoft.AspNetCore.SignalR.Common.Tests
         {
             var server = new TestRedisServer();
 
-            var manager1 = CreateLifetimeManager(server);
-            var manager2 = CreateLifetimeManager(server);
+            var manager1 = CreateNewHubLifetimeManager();
+            var manager2 = CreateNewHubLifetimeManagerFromExistingServer();
 
             using (var client = new TestClient())
             {
@@ -206,8 +178,8 @@ namespace Microsoft.AspNetCore.SignalR.Common.Tests
         {
             var server = new TestRedisServer();
 
-            var manager1 = CreateLifetimeManager(server);
-            var manager2 = CreateLifetimeManager(server);
+            var manager1 = CreateNewHubLifetimeManager();
+            var manager2 = CreateNewHubLifetimeManagerFromExistingServer();
 
             using (var client = new TestClient())
             {
@@ -228,7 +200,7 @@ namespace Microsoft.AspNetCore.SignalR.Common.Tests
         {
             var server = new TestRedisServer();
 
-            var manager = CreateLifetimeManager(server);
+            var manager = CreateNewHubLifetimeManager();
 
             using (var client = new TestClient())
             {
@@ -251,8 +223,8 @@ namespace Microsoft.AspNetCore.SignalR.Common.Tests
         {
             var server = new TestRedisServer();
 
-            var manager1 = CreateLifetimeManager(server);
-            var manager2 = CreateLifetimeManager(server);
+            var manager1 = CreateNewHubLifetimeManager();
+            var manager2 = CreateNewHubLifetimeManagerFromExistingServer();
 
             using (var client = new TestClient())
             {
@@ -275,8 +247,8 @@ namespace Microsoft.AspNetCore.SignalR.Common.Tests
         {
             var server = new TestRedisServer();
 
-            var manager1 = CreateLifetimeManager(server);
-            var manager2 = CreateLifetimeManager(server);
+            var manager1 = CreateNewHubLifetimeManager();
+            var manager2 = CreateNewHubLifetimeManagerFromExistingServer();
 
             using (var client = new TestClient())
             {
@@ -303,8 +275,8 @@ namespace Microsoft.AspNetCore.SignalR.Common.Tests
         {
             var server = new TestRedisServer();
 
-            var manager1 = CreateLifetimeManager(server);
-            var manager2 = CreateLifetimeManager(server);
+            var manager1 = CreateNewHubLifetimeManager();
+            var manager2 = CreateNewHubLifetimeManagerFromExistingServer();
 
             using (var client = new TestClient())
             {
@@ -326,8 +298,8 @@ namespace Microsoft.AspNetCore.SignalR.Common.Tests
         {
             var server = new TestRedisServer();
 
-            var manager1 = CreateLifetimeManager(server);
-            var manager2 = CreateLifetimeManager(server);
+            var manager1 = CreateNewHubLifetimeManager();
+            var manager2 = CreateNewHubLifetimeManagerFromExistingServer();
 
             using (var client = new TestClient())
             {
@@ -349,7 +321,7 @@ namespace Microsoft.AspNetCore.SignalR.Common.Tests
         {
             var server = new TestRedisServer();
 
-            var manager = CreateLifetimeManager(server);
+            var manager = CreateNewHubLifetimeManager();
 
             using (var client1 = new TestClient())
             using (var client2 = new TestClient())
@@ -382,7 +354,7 @@ namespace Microsoft.AspNetCore.SignalR.Common.Tests
         {
             var server = new TestRedisServer();
 
-            var manager = CreateLifetimeManager(server);
+            var manager = CreateNewHubLifetimeManager();
 
             using (var client1 = new TestClient())
             using (var client2 = new TestClient())
@@ -407,7 +379,7 @@ namespace Microsoft.AspNetCore.SignalR.Common.Tests
         {
             var server = new TestRedisServer();
 
-            var manager = CreateLifetimeManager(server);
+            var manager = CreateNewHubLifetimeManager();
 
             using (var client1 = new TestClient())
             using (var client2 = new TestClient())
@@ -429,51 +401,6 @@ namespace Microsoft.AspNetCore.SignalR.Common.Tests
                 await manager.OnDisconnectedAsync(connection1).OrTimeout();
                 await manager.SendUserAsync("userA", "Hello", new object[] { "World" }).OrTimeout();
                 await AssertMessageAsync(client2);
-            }
-        }
-
-
-        [Fact]
-        public async Task CamelCasedJsonIsPreservedAcrossRedisBoundary()
-        {
-            var server = new TestRedisServer();
-
-            var messagePackOptions = new MessagePackHubProtocolOptions();
-
-            var jsonOptions = new JsonHubProtocolOptions();
-            jsonOptions.PayloadSerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver();
-
-            using (var client1 = new TestClient())
-            using (var client2 = new TestClient())
-            {
-                // The sending manager has serializer settings
-                var manager1 = CreateLifetimeManager(server, messagePackOptions, jsonOptions);
-
-                // The receiving one doesn't matter because of how we serialize!
-                var manager2 = CreateLifetimeManager(server);
-
-                var connection1 = HubConnectionContextUtils.Create(client1.Connection);
-                var connection2 = HubConnectionContextUtils.Create(client2.Connection);
-
-                await manager1.OnConnectedAsync(connection1).OrTimeout();
-                await manager2.OnConnectedAsync(connection2).OrTimeout();
-
-                await manager1.SendAllAsync("Hello", new object[] { new TestObject { TestProperty = "Foo" } });
-
-                var message = Assert.IsType<InvocationMessage>(await client2.ReadAsync().OrTimeout());
-                Assert.Equal("Hello", message.Target);
-                Assert.Collection(
-                    message.Arguments,
-                    arg0 =>
-                    {
-                        var dict = Assert.IsType<JObject>(arg0);
-                        Assert.Collection(dict.Properties(),
-                            prop =>
-                            {
-                                Assert.Equal("testProperty", prop.Name);
-                                Assert.Equal("Foo", prop.Value.Value<string>());
-                            });
-                    });
             }
         }
 
