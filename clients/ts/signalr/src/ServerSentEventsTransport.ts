@@ -4,6 +4,7 @@
 import { HttpClient } from "./HttpClient";
 import { ILogger, LogLevel } from "./ILogger";
 import { ITransport, TransferFormat } from "./ITransport";
+import { EventSource, EventSourceConstructor } from "./Polyfills";
 import { Arg, getDataDetail, sendMessage } from "./Utils";
 
 export class ServerSentEventsTransport implements ITransport {
@@ -11,14 +12,17 @@ export class ServerSentEventsTransport implements ITransport {
     private readonly accessTokenFactory: () => string | Promise<string>;
     private readonly logger: ILogger;
     private readonly logMessageContent: boolean;
+    private readonly eventSourceConstructor: EventSourceConstructor;
     private eventSource: EventSource;
     private url: string;
 
-    constructor(httpClient: HttpClient, accessTokenFactory: () => string | Promise<string>, logger: ILogger, logMessageContent: boolean) {
+    constructor(httpClient: HttpClient, accessTokenFactory: () => string | Promise<string>, logger: ILogger, logMessageContent: boolean, eventSourceConstructor?: EventSourceConstructor) {
         this.httpClient = httpClient;
         this.accessTokenFactory = accessTokenFactory || (() => null);
         this.logger = logger;
         this.logMessageContent = logMessageContent;
+
+        this.eventSourceConstructor = eventSourceConstructor;
     }
 
     public async connect(url: string, transferFormat: TransferFormat): Promise<void> {
@@ -26,7 +30,7 @@ export class ServerSentEventsTransport implements ITransport {
         Arg.isRequired(transferFormat, "transferFormat");
         Arg.isIn(transferFormat, TransferFormat, "transferFormat");
 
-        if (typeof (EventSource) === "undefined") {
+        if (typeof (this.eventSourceConstructor) === "undefined") {
             throw new Error("'EventSource' is not supported in your environment.");
         }
 
@@ -44,10 +48,10 @@ export class ServerSentEventsTransport implements ITransport {
                 reject(new Error("The Server-Sent Events transport only supports the 'Text' transfer format"));
             }
 
-            const eventSource = new EventSource(url, { withCredentials: true });
+            const eventSource = new this.eventSourceConstructor(url, { withCredentials: true });
 
             try {
-                eventSource.onmessage = (e: MessageEvent) => {
+                eventSource.onmessage = (e) => {
                     if (this.onreceive) {
                         try {
                             this.logger.log(LogLevel.Trace, `(SSE transport) data received. ${getDataDetail(e.data, this.logMessageContent)}.`);
@@ -61,8 +65,10 @@ export class ServerSentEventsTransport implements ITransport {
                     }
                 };
 
-                eventSource.onerror = (e: any) => {
-                    const error = new Error(e.message || "Error occurred");
+                eventSource.onerror = (e) => {
+                    const error = (e.error && e.error instanceof Error) ?
+                        e.error :
+                        new Error(e.message || "Error occurred");
                     if (opened) {
                         this.close(error);
                     } else {

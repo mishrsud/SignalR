@@ -1,15 +1,21 @@
 // Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-import { DefaultHttpClient, HttpClient } from "./HttpClient";
+import { DefaultHttpClient } from "./DefaultHttpClient";
+import { HttpClient } from "./HttpClient";
 import { IConnection } from "./IConnection";
 import { IHttpConnectionOptions } from "./IHttpConnectionOptions";
 import { ILogger, LogLevel } from "./ILogger";
 import { HttpTransportType, ITransport, TransferFormat } from "./ITransport";
 import { LongPollingTransport } from "./LongPollingTransport";
+import { IPolyfills } from "./Polyfills";
 import { ServerSentEventsTransport } from "./ServerSentEventsTransport";
 import { Arg, createLogger } from "./Utils";
 import { WebSocketTransport } from "./WebSocketTransport";
+
+// Declare "window" here so that we can use it later. This just makes the global name "window" valid
+// in TypeScript so we can use it. If we're not in the browser, this will of course be undefined.
+declare var window: any;
 
 const enum ConnectionState {
     Connecting,
@@ -46,8 +52,9 @@ export class HttpConnection implements IConnection {
     public onreceive: (data: string | ArrayBuffer) => void;
     public onclose: (e?: Error) => void;
 
-    constructor(url: string, options: IHttpConnectionOptions = {}) {
+    constructor(url: string, polyfills: IPolyfills, options: IHttpConnectionOptions = {}) {
         Arg.isRequired(url, "url");
+        Arg.isRequired(polyfills, "polyfills");
 
         this.logger = createLogger(options.logger);
         this.baseUrl = this.resolveUrl(url);
@@ -246,9 +253,9 @@ export class HttpConnection implements IConnection {
     private constructTransport(transport: HttpTransportType) {
         switch (transport) {
             case HttpTransportType.WebSockets:
-                return new WebSocketTransport(this.accessTokenFactory, this.logger, this.options.logMessageContent);
+                return new WebSocketTransport(this.accessTokenFactory, this.logger, this.options.logMessageContent, this.options.WebSocket);
             case HttpTransportType.ServerSentEvents:
-                return new ServerSentEventsTransport(this.httpClient, this.accessTokenFactory, this.logger, this.options.logMessageContent);
+                return new ServerSentEventsTransport(this.httpClient, this.accessTokenFactory, this.logger, this.options.logMessageContent, this.options.EventSource);
             case HttpTransportType.LongPolling:
                 return new LongPollingTransport(this.httpClient, this.accessTokenFactory, this.logger, this.options.logMessageContent);
             default:
@@ -264,8 +271,8 @@ export class HttpConnection implements IConnection {
             const transferFormats = endpoint.transferFormats.map((s) => TransferFormat[s]);
             if (transportMatches(requestedTransport, transport)) {
                 if (transferFormats.indexOf(requestedTransferFormat) >= 0) {
-                    if ((transport === HttpTransportType.WebSockets && typeof WebSocket === "undefined") ||
-                        (transport === HttpTransportType.ServerSentEvents && typeof EventSource === "undefined")) {
+                    if ((transport === HttpTransportType.WebSockets && typeof this.options.WebSocket === "undefined") ||
+                        (transport === HttpTransportType.ServerSentEvents && typeof this.options.EventSource === "undefined")) {
                         this.logger.log(LogLevel.Debug, `Skipping transport '${HttpTransportType[transport]}' because it is not supported in your environment.'`);
                     } else {
                         this.logger.log(LogLevel.Debug, `Selecting transport '${HttpTransportType[transport]}'`);

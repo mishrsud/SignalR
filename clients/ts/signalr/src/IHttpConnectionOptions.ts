@@ -4,6 +4,7 @@
 import { HttpClient } from "./HttpClient";
 import { ILogger, LogLevel } from "./ILogger";
 import { HttpTransportType, ITransport } from "./ITransport";
+import { EventSourceConstructor, WebSocketConstructor } from "./Polyfills";
 
 /** Options provided to the 'withUrl' method on {@link HubConnectionBuilder} to configure options for the HTTP-based transports. */
 export interface IHttpConnectionOptions {
@@ -38,4 +39,19 @@ export interface IHttpConnectionOptions {
      * Negotiation can only be skipped when the {@link transport} property is set to 'HttpTransportType.WebSockets'.
      */
     skipNegotiation?: boolean;
+
+    // Polyfills - We're not ready to expose these "publicly" yet. Technically, if a user sets these to
+    // values we can use as constructors, it'll work, but we exclude them from the .d.ts file for now
+
+    /** A constructor that can be used to create a WebSocket.
+     *
+     * @internal
+     */
+    WebSocket?: WebSocketConstructor;
+
+    /** A constructor that can be used to create an EventSource.
+     *
+     * @internal
+     */
+    EventSource?: EventSourceConstructor;
 }

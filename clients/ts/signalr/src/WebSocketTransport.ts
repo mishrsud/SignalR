@@ -3,15 +3,20 @@
 
 import { ILogger, LogLevel } from "./ILogger";
 import { ITransport, TransferFormat } from "./ITransport";
+import { CloseEvent, ErrorEvent, Event, MessageEvent, WebSocket, WebSocketConstructor } from "./Polyfills";
 import { Arg, getDataDetail } from "./Utils";
 
 export class WebSocketTransport implements ITransport {
+    private readonly webSocketConstructor: WebSocketConstructor;
     private readonly logger: ILogger;
     private readonly accessTokenFactory: () => string | Promise<string>;
     private readonly logMessageContent: boolean;
     private webSocket: WebSocket;
 
-    constructor(accessTokenFactory: () => string | Promise<string>, logger: ILogger, logMessageContent: boolean) {
+    constructor(accessTokenFactory: () => string | Promise<string>, logger: ILogger, logMessageContent: boolean, webSocketConstructor: WebSocketConstructor) {
+        // REVIEW: Naming of this parameter and property?
+        this.webSocketConstructor = webSocketConstructor;
+
         this.logger = logger;
         this.accessTokenFactory = accessTokenFactory || (() => null);
         this.logMessageContent = logMessageContent;
@@ -22,7 +27,7 @@ export class WebSocketTransport implements ITransport {
         Arg.isRequired(transferFormat, "transferFormat");
         Arg.isIn(transferFormat, TransferFormat, "transferFormat");
 
-        if (typeof (WebSocket) === "undefined") {
+        if (typeof (this.webSocketConstructor) === "undefined") {
             throw new Error("'WebSocket' is not supported in your environment.");
         }
 
@@ -35,7 +40,7 @@ export class WebSocketTransport implements ITransport {
 
         return new Promise<void>((resolve, reject) => {
             url = url.replace(/^http/, "ws");
-            const webSocket = new WebSocket(url);
+            const webSocket = new this.webSocketConstructor(url);
             if (transferFormat === TransferFormat.Binary) {
                 webSocket.binaryType = "arraybuffer";
             }
@@ -72,7 +77,7 @@ export class WebSocketTransport implements ITransport {
     }
 
     public send(data: any): Promise<void> {
-        if (this.webSocket && this.webSocket.readyState === WebSocket.OPEN) {
+        if (this.webSocket && this.webSocket.readyState === this.webSocketConstructor.OPEN) {
             this.logger.log(LogLevel.Trace, `(WebSockets transport) sending data. ${getDataDetail(data, this.logMessageContent)}.`);
             this.webSocket.send(data);
             return Promise.resolve();

@@ -9,6 +9,7 @@ import { ILogger, LogLevel } from "./ILogger";
 import { HttpTransportType } from "./ITransport";
 import { JsonHubProtocol } from "./JsonHubProtocol";
 import { NullLogger } from "./Loggers";
+import { EventSourceConstructor, WebSocketConstructor } from "./Polyfills";
 import { Arg, ConsoleLogger } from "./Utils";
 
 /** A builder for configuring {@link HubConnection} instances. */
@@ -21,6 +22,10 @@ export class HubConnectionBuilder {
     public url: string;
     /** @internal */
     public logger: ILogger;
+    /** @internal */
+    public webSocketConstructor: WebSocketConstructor;
+    /** @internal */
+    public eventSourceConstructor: EventSourceConstructor;
 
     /** Configures console logging for the {@link HubConnection}.
      *
@@ -100,6 +105,16 @@ export class HubConnectionBuilder {
         return this;
     }
 
+    public withWebSocketPolyfill(webSocketConstructor: WebSocketConstructor): HubConnectionBuilder {
+        this.webSocketConstructor = webSocketConstructor;
+        return this;
+    }
+
+    public withEventSourcePolyfill(eventSourceConstructor: EventSourceConstructor): HubConnectionBuilder {
+        this.eventSourceConstructor = eventSourceConstructor;
+        return this;
+    }
+
     /** Creates a {@link HubConnection} from the configuration options specified in this builder.
      *
      * @returns {HubConnection} The configured {@link HubConnection}.
@@ -115,11 +130,16 @@ export class HubConnectionBuilder {
             httpConnectionOptions.logger = this.logger;
         }
 
+        const polyfills = {
+            EventSource: this.eventSourceConstructor,
+            WebSocket: this.webSocketConstructor,
+        };
+
         // Now create the connection
         if (!this.url) {
             throw new Error("The 'HubConnectionBuilder.withUrl' method must be called before building the connection.");
         }
-        const connection = new HttpConnection(this.url, httpConnectionOptions);
+        const connection = new HttpConnection(this.url, polyfills, httpConnectionOptions);
 
         return HubConnection.create(
             connection,

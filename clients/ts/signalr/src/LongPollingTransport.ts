@@ -16,7 +16,6 @@ export class LongPollingTransport implements ITransport {
     private readonly logMessageContent: boolean;
 
     private url: string;
-    private pollXhr: XMLHttpRequest;
     private pollAbort: AbortController;
     private running: boolean;
     private receiving: Promise<void>;
@@ -44,8 +43,7 @@ export class LongPollingTransport implements ITransport {
 
         this.logger.log(LogLevel.Trace, "(LongPolling transport) Connecting");
 
-        if (transferFormat === TransferFormat.Binary && (typeof new XMLHttpRequest().responseType !== "string")) {
-            // This will work if we fix: https://github.com/aspnet/SignalR/issues/742
+        if (transferFormat === TransferFormat.Binary && !this.httpClient.supportsBinary) {
             throw new Error("Binary protocols over XmlHttpRequest not implementing advanced features are not supported.");
         }
 

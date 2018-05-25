@@ -5,6 +5,8 @@ import { AbortSignal } from "./AbortController";
 import { AbortError, HttpError, TimeoutError } from "./Errors";
 import { ILogger, LogLevel } from "./ILogger";
 
+export type ResponseType = "" | "arraybuffer" | "blob" | "document" | "json" | "text";
+
 /** Represents an HTTP request. */
 export interface HttpRequest {
     /** The HTTP method to use for the request. */
@@ -19,8 +21,8 @@ export interface HttpRequest {
     /** An object describing headers to apply to the request. */
     headers?: { [key: string]: string };
 
-    /** The XMLHttpRequestResponseType to apply to the request. */
-    responseType?: XMLHttpRequestResponseType;
+    /** The ResponseType to apply to the request. */
+    responseType?: ResponseType;
 
     /** An AbortSignal that can be monitored for cancellation. */
     abortSignal?: AbortSignal;
@@ -71,6 +73,11 @@ export class HttpResponse {
  * This class provides an abstraction over an HTTP client so that a different implementation can be provided on different platforms.
  */
 export abstract class HttpClient {
+    /** Gets a value indicating if this HttpClient supports binary messages */
+    public get supportsBinary(): boolean {
+        return true;
+    }
+
     /** Issues an HTTP GET request to the specified URL, returning a Promise that resolves with an {@link HttpResponse} representing the result.
      *
      * @param {string} url The URL for the request.
@@ -143,78 +150,4 @@ export abstract class HttpClient {
      * @returns {Promise<HttpResponse>} A Promise that resolves with an HttpResponse describing the response, or rejects with an Error indicating a failure.
      */
     public abstract send(request: HttpRequest): Promise<HttpResponse>;
-}
-
-/** Default implementation of {@link HttpClient}. */
-export class DefaultHttpClient extends HttpClient {
-    private readonly logger: ILogger;
-
-    /** Creates a new instance of the {@link DefaultHttpClient}, using the provided {@link ILogger} to log messages. */
-    public constructor(logger: ILogger) {
-        super();
-        this.logger = logger;
-    }
-
-    /** @inheritDoc */
-    public send(request: HttpRequest): Promise<HttpResponse> {
-        return new Promise<HttpResponse>((resolve, reject) => {
-            // Check that abort was not signaled before calling send
-            if (request.abortSignal && request.abortSignal.aborted) {
-                reject(new AbortError());
-                return;
-            }
-
-            const xhr = new XMLHttpRequest();
-
-            xhr.open(request.method, request.url, true);
-            xhr.withCredentials = true;
-            xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
-            // Explicitly setting the Content-Type header for React Native on Android platform.
-            xhr.setRequestHeader("Content-Type", "text/plain;charset=UTF-8");
-
-            if (request.headers) {
-                Object.keys(request.headers)
-                    .forEach((header) => xhr.setRequestHeader(header, request.headers[header]));
-            }
-
-            if (request.responseType) {
-                xhr.responseType = request.responseType;
-            }
-
-            if (request.abortSignal) {
-                request.abortSignal.onabort = () => {
-                    xhr.abort();
-                    reject(new AbortError());
-                };
-            }
-
-            if (request.timeout) {
-                xhr.timeout = request.timeout;
-            }
-
-            xhr.onload = () => {
-                if (request.abortSignal) {
-                    request.abortSignal.onabort = null;
-                }
-
-                if (xhr.status >= 200 && xhr.status < 300) {
-                    resolve(new HttpResponse(xhr.status, xhr.statusText, xhr.response || xhr.responseText));
-                } else {
-                    reject(new HttpError(xhr.statusText, xhr.status));
-                }
-            };
-
-            xhr.onerror = () => {
-                this.logger.log(LogLevel.Warning, `Error from HTTP request. ${xhr.status}: ${xhr.statusText}`);
-                reject(new HttpError(xhr.statusText, xhr.status));
-            };
-
-            xhr.ontimeout = () => {
-                this.logger.log(LogLevel.Warning, `Timeout from HTTP request.`);
-                reject(new TimeoutError());
-            };
-
-            xhr.send(request.content || "");
-        });
-    }
 }
