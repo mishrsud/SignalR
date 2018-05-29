@@ -10,7 +10,7 @@ namespace Microsoft.AspNetCore.SignalR.Specification.Tests
 {
     public abstract class HubLifetimeManagerTestsBase<THub> where THub : Hub
     {
-        public HubLifetimeManager<THub> Manager;
+        public HubLifetimeManager<THub> Manager { get; set; }
 
         public abstract HubLifetimeManager<THub> CreateNewHubLifetimeManager();
 
@@ -33,7 +33,7 @@ namespace Microsoft.AspNetCore.SignalR.Specification.Tests
                 Assert.Equal("Hello", message.Target);
                 Assert.Single(message.Arguments);
                 Assert.Equal("World", (string)message.Arguments[0]);
-                Assert.True(false);
+
                 message = Assert.IsType<InvocationMessage>(client2.TryRead());
                 Assert.Equal("Hello", message.Target);
                 Assert.Single(message.Arguments);
