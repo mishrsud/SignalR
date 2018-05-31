@@ -11,9 +11,10 @@ using Xunit;
 
 namespace Microsoft.AspNetCore.SignalR.Specification.Tests
 {
-    public abstract class ScaleoutHubLifetimeManagerTests : HubLifetimeManagerTestsBase<MyHub>
+    public abstract class ScaleoutHubLifetimeManagerTests<TBackplane> : HubLifetimeManagerTestsBase<MyHub>
     {
-        public abstract HubLifetimeManager<MyHub> CreateNewHubLifetimeManagerFromExistingServer();
+        public abstract TBackplane CreateBackplane();
+        public abstract HubLifetimeManager<MyHub> CreateNewHubLifetimeManager(TBackplane backplane);
 
         private async Task AssertMessageAsync(TestClient client)
         {
@@ -26,9 +27,9 @@ namespace Microsoft.AspNetCore.SignalR.Specification.Tests
         [Fact]
         public async Task InvokeAllAsyncWithMultipleServersWritesToAllConnectionsOutput()
         {
-
-            var manager1 = CreateNewHubLifetimeManager();
-            var manager2 = CreateNewHubLifetimeManagerFromExistingServer();
+            var backplane = CreateBackplane();
+            var manager1 = CreateNewHubLifetimeManager(backplane);
+            var manager2 = CreateNewHubLifetimeManager(backplane);
 
             using (var client1 = new TestClient())
             using (var client2 = new TestClient())
@@ -49,10 +50,9 @@ namespace Microsoft.AspNetCore.SignalR.Specification.Tests
         [Fact]
         public async Task InvokeAllAsyncWithMultipleServersDoesNotWriteToDisconnectedConnectionsOutput()
         {
-            var server = new TestRedisServer();
-
-            var manager1 = CreateNewHubLifetimeManager();
-            var manager2 = CreateNewHubLifetimeManagerFromExistingServer();
+            var backplane = CreateBackplane();
+            var manager1 = CreateNewHubLifetimeManager(backplane);
+            var manager2 = CreateNewHubLifetimeManager(backplane);
 
             using (var client1 = new TestClient())
             using (var client2 = new TestClient())
@@ -76,10 +76,10 @@ namespace Microsoft.AspNetCore.SignalR.Specification.Tests
         [Fact]
         public async Task InvokeConnectionAsyncOnServerWithoutConnectionWritesOutputToConnection()
         {
-            var server = new TestRedisServer();
+            var backplane = CreateBackplane();
 
-            var manager1 = CreateNewHubLifetimeManager();
-            var manager2 = CreateNewHubLifetimeManagerFromExistingServer();
+            var manager1 = CreateNewHubLifetimeManager(backplane);
+            var manager2 = CreateNewHubLifetimeManager(backplane);
 
             using (var client = new TestClient())
             {
@@ -96,10 +96,10 @@ namespace Microsoft.AspNetCore.SignalR.Specification.Tests
         [Fact]
         public async Task InvokeGroupAsyncOnServerWithoutConnectionWritesOutputToGroupConnection()
         {
-            var server = new TestRedisServer();
+            var backplane = CreateBackplane();
 
-            var manager1 = CreateNewHubLifetimeManager();
-            var manager2 = CreateNewHubLifetimeManagerFromExistingServer();
+            var manager1 = CreateNewHubLifetimeManager(backplane);
+            var manager2 = CreateNewHubLifetimeManager(backplane);
 
             using (var client = new TestClient())
             {
@@ -118,9 +118,8 @@ namespace Microsoft.AspNetCore.SignalR.Specification.Tests
         [Fact]
         public async Task DisconnectConnectionRemovesConnectionFromGroup()
         {
-            var server = new TestRedisServer();
-
-            var manager = CreateNewHubLifetimeManager();
+            var backplane = CreateBackplane();
+            var manager = CreateNewHubLifetimeManager(backplane);
 
             using (var client = new TestClient())
             {
@@ -141,9 +140,8 @@ namespace Microsoft.AspNetCore.SignalR.Specification.Tests
         [Fact]
         public async Task RemoveGroupFromLocalConnectionNotInGroupDoesNothing()
         {
-            var server = new TestRedisServer();
-
-            var manager = CreateNewHubLifetimeManager();
+            var backplane = CreateBackplane();
+            var manager = CreateNewHubLifetimeManager(backplane);
 
             using (var client = new TestClient())
             {
@@ -158,10 +156,9 @@ namespace Microsoft.AspNetCore.SignalR.Specification.Tests
         [Fact]
         public async Task RemoveGroupFromConnectionOnDifferentServerNotInGroupDoesNothing()
         {
-            var server = new TestRedisServer();
-
-            var manager1 = CreateNewHubLifetimeManager();
-            var manager2 = CreateNewHubLifetimeManagerFromExistingServer();
+            var backplane = CreateBackplane();
+            var manager1 = CreateNewHubLifetimeManager(backplane);
+            var manager2 = CreateNewHubLifetimeManager(backplane);
 
             using (var client = new TestClient())
             {
@@ -176,10 +173,9 @@ namespace Microsoft.AspNetCore.SignalR.Specification.Tests
         [Fact]
         public async Task AddGroupAsyncForConnectionOnDifferentServerWorks()
         {
-            var server = new TestRedisServer();
-
-            var manager1 = CreateNewHubLifetimeManager();
-            var manager2 = CreateNewHubLifetimeManagerFromExistingServer();
+            var backplane = CreateBackplane();
+            var manager1 = CreateNewHubLifetimeManager(backplane);
+            var manager2 = CreateNewHubLifetimeManager(backplane);
 
             using (var client = new TestClient())
             {
@@ -198,9 +194,8 @@ namespace Microsoft.AspNetCore.SignalR.Specification.Tests
         [Fact]
         public async Task AddGroupAsyncForLocalConnectionAlreadyInGroupDoesNothing()
         {
-            var server = new TestRedisServer();
-
-            var manager = CreateNewHubLifetimeManager();
+            var backplane = CreateBackplane();
+            var manager = CreateNewHubLifetimeManager(backplane);
 
             using (var client = new TestClient())
             {
@@ -221,10 +216,9 @@ namespace Microsoft.AspNetCore.SignalR.Specification.Tests
         [Fact]
         public async Task AddGroupAsyncForConnectionOnDifferentServerAlreadyInGroupDoesNothing()
         {
-            var server = new TestRedisServer();
-
-            var manager1 = CreateNewHubLifetimeManager();
-            var manager2 = CreateNewHubLifetimeManagerFromExistingServer();
+            var backplane = CreateBackplane();
+            var manager1 = CreateNewHubLifetimeManager(backplane);
+            var manager2 = CreateNewHubLifetimeManager(backplane);
 
             using (var client = new TestClient())
             {
@@ -245,10 +239,9 @@ namespace Microsoft.AspNetCore.SignalR.Specification.Tests
         [Fact]
         public async Task RemoveGroupAsyncForConnectionOnDifferentServerWorks()
         {
-            var server = new TestRedisServer();
-
-            var manager1 = CreateNewHubLifetimeManager();
-            var manager2 = CreateNewHubLifetimeManagerFromExistingServer();
+            var backplane = CreateBackplane();
+            var manager1 = CreateNewHubLifetimeManager(backplane);
+            var manager2 = CreateNewHubLifetimeManager(backplane);
 
             using (var client = new TestClient())
             {
@@ -273,10 +266,9 @@ namespace Microsoft.AspNetCore.SignalR.Specification.Tests
         [Fact]
         public async Task InvokeConnectionAsyncForLocalConnectionDoesNotPublishToRedis()
         {
-            var server = new TestRedisServer();
-
-            var manager1 = CreateNewHubLifetimeManager();
-            var manager2 = CreateNewHubLifetimeManagerFromExistingServer();
+            var backplane = CreateBackplane();
+            var manager1 = CreateNewHubLifetimeManager(backplane);
+            var manager2 = CreateNewHubLifetimeManager(backplane);
 
             using (var client = new TestClient())
             {
@@ -296,10 +288,9 @@ namespace Microsoft.AspNetCore.SignalR.Specification.Tests
         [Fact]
         public async Task WritingToRemoteConnectionThatFailsDoesNotThrow()
         {
-            var server = new TestRedisServer();
-
-            var manager1 = CreateNewHubLifetimeManager();
-            var manager2 = CreateNewHubLifetimeManagerFromExistingServer();
+            var backplane = CreateBackplane();
+            var manager1 = CreateNewHubLifetimeManager(backplane);
+            var manager2 = CreateNewHubLifetimeManager(backplane);
 
             using (var client = new TestClient())
             {
@@ -319,9 +310,8 @@ namespace Microsoft.AspNetCore.SignalR.Specification.Tests
         [Fact]
         public async Task WritingToGroupWithOneConnectionFailingSecondConnectionStillReceivesMessage()
         {
-            var server = new TestRedisServer();
-
-            var manager = CreateNewHubLifetimeManager();
+            var backplane = CreateBackplane();
+            var manager = CreateNewHubLifetimeManager(backplane);
 
             using (var client1 = new TestClient())
             using (var client2 = new TestClient())
@@ -352,9 +342,8 @@ namespace Microsoft.AspNetCore.SignalR.Specification.Tests
         [Fact]
         public async Task InvokeUserSendsToAllConnectionsForUser()
         {
-            var server = new TestRedisServer();
-
-            var manager = CreateNewHubLifetimeManager();
+            var backplane = CreateBackplane();
+            var manager = CreateNewHubLifetimeManager(backplane);
 
             using (var client1 = new TestClient())
             using (var client2 = new TestClient())
@@ -377,9 +366,8 @@ namespace Microsoft.AspNetCore.SignalR.Specification.Tests
         [Fact]
         public async Task StillSubscribedToUserAfterOneOfMultipleConnectionsAssociatedWithUserDisconnects()
         {
-            var server = new TestRedisServer();
-
-            var manager = CreateNewHubLifetimeManager();
+            var backplane = CreateBackplane();
+            var manager = CreateNewHubLifetimeManager(backplane);
 
             using (var client1 = new TestClient())
             using (var client2 = new TestClient())
@@ -403,10 +391,8 @@ namespace Microsoft.AspNetCore.SignalR.Specification.Tests
                 await AssertMessageAsync(client2);
             }
         }
-
-        public class TestObject
-        {
-            public string TestProperty { get; set; }
-        }
+    }
+    public class MyHub : Hub
+    {
     }
 }
