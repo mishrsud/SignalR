@@ -33,7 +33,7 @@ steps:
     arguments: '-RootDirectory $(Build.SourcesDirectory) -CommitHash $(Build.SourceVersion) -BranchName $(Build.SourceBranch) -BuildNumber $(Build.BuildNumber)'
 
 - task: AzureRmWebAppDeployment@3
-  displayName: Deploy: FunctionalTests
+  displayName: "Deploy: FunctionalTests"
   inputs:
     azureSubscription: '$(Parameters.AzureSubscription)'
     WebAppName: '$(Parameters.FunctionalTestAppName)'
@@ -42,7 +42,7 @@ steps:
   continueOnError: true
 
 - task: AzureRmWebAppDeployment@3
-  displayName: Deploy: signalr-samples
+  displayName: "Deploy: signalr-samples"
   inputs:
     azureSubscription: '$(Parameters.AzureSubscription)'
     WebAppName: '$(Parameters.SamplesAppName)'
